@@ -9,7 +9,10 @@ Smart deadbolt controller leveraging MySensors for connectivity running on an Ar
 <br>
 
 ## Summary
- - Fully custom enclosure and mounting bracket  
+ - Fully custom enclosure and mounting bracket designed by yours truly in Autodesk Inventer and 3D printed in-house
+ - Tooless, modular design allowed for rapid prototyping and iterative design
+ - Custom designed 3D printed components: Enclosure, door mounting system, motor mount, gear adapter for deadbolt thumb latch, and gear driven by motor with hole for potentiometer
+ - Specially designed to not require any modification to existing deadbolt or door
 
 <br>
 
