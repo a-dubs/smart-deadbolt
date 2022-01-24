@@ -25,6 +25,7 @@ short gear_pot_pos = 0;
 bool deadbolt_current_state = false;
 bool deadbolt_target_state = true;
 bool motor_on = false;
+short resting_gear_pot_pos;  // last position read by potentiometer after deadbolt was finished being moved by motor
 
 void unlockDeadbolt(void)
 {
@@ -33,6 +34,8 @@ void unlockDeadbolt(void)
 //  printf("Unlocking Deadbolt...\n");
   digitalWrite(MOTOR_BACKWARD, HIGH);
   digitalWrite(MOTOR_FORWARD, LOW);
+  delay(10); // pause to let everything settle to a rest
+  resting_gear_pot_pos = (analogRead(GEAR_POT) * 270.0) / 1024.0;
 }
 
 
@@ -72,7 +75,11 @@ void setup() {
 }
 
 void loop() {
- 
+
+
+    //////////////////////////////////////
+    // PRESENCE DETECTION CODE // 
+    /////////////////////////////////////
     if (person_present_recent_val != person_present)
     {
       
@@ -88,8 +95,13 @@ void loop() {
 
   gear_pot_pos = (analogRead(GEAR_POT) * 270.0) / 1024.0;
 
+
+    //////////////////////////////////////
+    // DEADBOLT CONTROL CODE // 
+    /////////////////////////////////////
   if (!SETUP_MODE)
   {
+    // if deadbolt has been locked
     if (gear_pot_pos >= LOCKED_POT_POS)
     {
 //      deadbolt_current_state = LOCKED;
@@ -101,6 +113,7 @@ void loop() {
         deadbolt_current_state = LOCKED;
       }
     }
+    // if deadbolt has been unlocked
     else if (gear_pot_pos <= UNLOCKED_POT_POS)
     {
 //      deadbolt_current_state = UNLOCKED;
@@ -112,13 +125,9 @@ void loop() {
         stopDeadbolt();
       }
     }
-  //  else if (gear_pot_pos > UNLOCKED_POT_POS && gear_pot_pos < LOCKED_POT_POS){
-  ////    if (deadboltCurrentState != MOVING)
-  ////    {
-  ////      printf("Deadbolt is now moving!\n");
-  ////      deadboltCurrentState == MOVING;
-  ////    }
-  //  }
+
+    // if deadbolt has been moved manually 
+    else if (
 
   }  
 //
@@ -148,6 +157,10 @@ void loop() {
 //
 //
 //  
+
+    //////////////////////////////////////
+    // DEBUG & TESTING W/ SERIAL CODE // 
+    /////////////////////////////////////
   if (Serial.available() > 0)
   {
     char ui = Serial.read();
