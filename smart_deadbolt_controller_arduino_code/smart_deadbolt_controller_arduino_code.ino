@@ -17,16 +17,17 @@
 #define UNLOCKED_POT_POS  20 // max value potentiometer must read for door to be "locked" (in degrees [0-270])
 #define IR_MOTDET_TO ((unsigned long) 20000)
 
+#define MANUAL_ASSIST_ACTIVATION_THRESHOLD 1 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
 
 unsigned long last_time_present = 0;
 bool person_present = false;
 bool person_present_recent_val = false;
-short gear_pot_pos = 0;
+short gear_pot_rot = 0;
 bool deadbolt_current_state = false;
 bool deadbolt_target_state = true;
 bool motor_on = false;
-short resting_gear_pot_pos;  // last position read by potentiometer after deadbolt was finished being moved by motor
-
+short pot_value_when_stopped;  // value read by potentiometer after deadbolt was finished being moved by motor [0-1024]
+short pot_value;
 void unlockDeadbolt(void)
 {
   deadbolt_target_state = UNLOCKED;
@@ -34,8 +35,6 @@ void unlockDeadbolt(void)
 //  printf("Unlocking Deadbolt...\n");
   digitalWrite(MOTOR_BACKWARD, HIGH);
   digitalWrite(MOTOR_FORWARD, LOW);
-  delay(10); // pause to let everything settle to a rest
-  resting_gear_pot_pos = (analogRead(GEAR_POT) * 270.0) / 1024.0;
 }
 
 
@@ -46,6 +45,7 @@ void lockDeadbolt(void)
 //  printf("Locking Deadbolt...\n");
   digitalWrite(MOTOR_BACKWARD, LOW);
   digitalWrite(MOTOR_FORWARD, HIGH);
+  
 }
 
 void stopDeadbolt(void)
@@ -54,6 +54,8 @@ void stopDeadbolt(void)
 //  printf("Stopping Deadbolt Motor...\n");
   digitalWrite(MOTOR_BACKWARD, LOW);
   digitalWrite(MOTOR_FORWARD, LOW);
+  delay(10); // pause to let everything settle to a rest
+  pot_value_when_stopped = analogRead(GEAR_POT);
 }
 
 void setup() {
@@ -93,7 +95,7 @@ void loop() {
     }
     digitalWrite(PERSON_PRESENT_PIN, person_present);
 
-  gear_pot_pos = (analogRead(GEAR_POT) * 270.0) / 1024.0;
+  gear_pot_rot = (analogRead(GEAR_POT) * 270.0) / 1024.0;
 
 
     //////////////////////////////////////
@@ -102,41 +104,63 @@ void loop() {
   if (!SETUP_MODE)
   {
     // if deadbolt has been locked
-    if (gear_pot_pos >= LOCKED_POT_POS)
+    if (gear_pot_rot >= LOCKED_POT_POS)
     {
 //      deadbolt_current_state = LOCKED;
       if (deadbolt_current_state != LOCKED)
       {
-        if (deadbolt_current_state)
-        stopDeadbolt();
-        printf("Deadbolt is now locked\n");
+        if (deadbolt_current_state == LOCKED)
+            { printf("Deadbolt is now locked\n"); }
+        
         deadbolt_current_state = LOCKED;
+        stopDeadbolt();
       }
     }
     // if deadbolt has been unlocked
-    else if (gear_pot_pos <= UNLOCKED_POT_POS)
+    else if (gear_pot_rot <= UNLOCKED_POT_POS)
     {
 //      deadbolt_current_state = UNLOCKED;
       if (deadbolt_current_state != UNLOCKED)
       {
-        printf("Deadbolt is now unlocked\n");
+        if (deadbolt_current_state == LOCKED)
+            { printf("Deadbolt is now unlocked\n"); }
+
         deadbolt_current_state = UNLOCKED;
-          
         stopDeadbolt();
       }
     }
-
+    pot_value = analogRead(GEAR_POT);
     // if deadbolt has been moved manually 
-    else if (
+    else if (!motor_on && 
+        (  pot_value - pot_value_when_stopped <= -MANUAL_ASSIST_ACTIVATION_THRESHOLD
+        || pot_value - pot_value_when_stopped >= MANUAL_ASSIST_ACTIVATION_THRESHOLD))
+    {
+        // if currently locked
+        if (deadbolt_current_state == LOCKED 
+        // and the deadbolt has been turned in the unlock direction
+        && pot_value - pot_value_when_stopped <= -MANUAL_ASSIST_ACTIVATION_THRESHOLD)
+        {
+            delay(1000);
+            unlockDeadbolt();
+        }
+        else if (deadbolt_current_state == UNLOCKED 
+        // and the deadbolt has been turned in the lock direction
+        && pot_value - pot_value_when_stopped >= MANUAL_ASSIST_ACTIVATION_THRESHOLD)
+        {
+            delay(1000);
+            lockDeadbolt();
+        }
+    }
 
   }  
+
 //
 //  static volatile short new_deadbolt_pot_pos =  (analogRead(GEAR_POT) * 270.0) / 1024.0;
-//  if ((new_deadbolt_pot_pos - gear_pot_pos > 1) || (new_deadbolt_pot_pos - gear_pot_pos < -1))
+//  if ((new_deadbolt_pot_pos - gear_pot_rot > 1) || (new_deadbolt_pot_pos - gear_pot_rot < -1))
 //  {
 //    printf("gear potentiometer position [0-270deg] %d:\n", new_deadbolt_pot_pos); 
 //  }
-//  gear_pot_pos = new_deadbolt_pot_pos;
+//  gear_pot_rot = new_deadbolt_pot_pos;
 ////  printf("raw potentiometer value [0-1024]: %ld\n", analogRead(GEAR_POT));
 // 
 //  printf("%d, %d\n", deadboltCurrentState, deadboltTargetState);
@@ -155,8 +179,6 @@ void loop() {
 //    }
 //  }
 //
-//
-//  
 
     //////////////////////////////////////
     // DEBUG & TESTING W/ SERIAL CODE // 
@@ -178,7 +200,7 @@ void loop() {
     }
     else if (ui == 'p')
     {
-      printf("gear potentiometer position [0-270deg] %d:\n", gear_pot_pos);
+      printf("gear potentiometer position [0-270deg] %d:\n", gear_pot_rot);
     }
     else if (ui == 'd')
     {
