@@ -8,7 +8,9 @@ Smart deadbolt controller leveraging MySensors for connectivity running on an Ar
  - Fully custom enclosure and mounting bracket designed by yours truly in Autodesk Inventer and 3D printed in-house
  - Tooless, modular design allowed for rapid prototyping and iterative design
  - Custom designed 3D printed components: Enclosure, door mounting system, motor mount, gear adapter for deadbolt thumb latch, and gear driven by motor with hole for potentiometer
- - Specially designed to not require any modification to existing deadbolt or door
+ - Specially designed to not require any modification to existing deadbolt or door (since this is being installed in an apartment)
+ - Will be controlled by my Home Assistant smart home ecosystem using secure authentication via my [Secure Smart Apartment Entry Panel](https://github.com/a-dubs/secure-smart-apt-entry-panel)
+   - Leverages NRF24 radio modules to connect to my MySensors network which is controlled by my Home Assistant smart home ecosystem 
 
 <br>
 
