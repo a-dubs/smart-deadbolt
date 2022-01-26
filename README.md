@@ -24,11 +24,11 @@ Smart deadbolt controller leveraging MySensors for connectivity running on an Ar
 
 <br>
 
-### View w/ Clear Top
+<!-- ### View w/ Clear Top
 ![view with clear top](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_clear_roof_1.jpg)
 
 <br>
-
+ -->
 ### View w/ Clear Sides
 ![view with clear sides](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_clear_sides_1.jpg)
 
