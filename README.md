@@ -14,15 +14,36 @@ Smart deadbolt controller leveraging MySensors for connectivity running on an Ar
 
 ## Image Gallery
 
-### Placeholder Image (This is the image's caption/label)
-![Please end my suffering... (This is the image's alt text)](https://github.com/a-dubs/github-project-template/blob/master/image_gallery/Please%20replace%20me%20I%20am%20begging%20you.jpg)
+### Assembly of 3D Printed Components
+![assembly of 3d printed components](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_1.jpg)
+
 <br>
 
-<!-- 
-### (This is the image's caption/label)
-![(This is the image's alt text)](full_http_path_to_image)
-<br> 
--->
+### Assembly of 3D Printed Components
+![assembly of 3d printed components](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_2.jpg)
+
+<br>
+
+### View w/ Clear Top
+![view with clear top](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_clear_roof_1.jpg)
+
+<br>
+
+### View w/ Clear Sides
+![view with clear sides](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_clear_sides_1.jpg)
+
+<br>
+
+### Exploded View
+![exploded view](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_expanded_1.jpg)
+
+<br>
+
+### Exploded View w/ Clear Sides & Bottom
+![exploded view with clears sides and bottom](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_expanded_2.jpg)
+
+<br>
+
 
 <br>
 
@@ -30,7 +51,5 @@ Smart deadbolt controller leveraging MySensors for connectivity running on an Ar
 
 **Project Status** : Active  
 **Project Progress** : In Progress
-
-**Start date** : 10/21  
-**End date** : N/A  
+**Project Dates** : Oct '21 - Present
 
