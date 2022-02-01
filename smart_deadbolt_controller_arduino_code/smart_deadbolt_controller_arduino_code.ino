@@ -15,7 +15,7 @@
 
 #define LOCKED_POT_POS 210 // min value potentiometer must read for door to be "locked" (in degrees [0-270])
 #define UNLOCKED_POT_POS  20 // max value potentiometer must read for door to be "locked" (in degrees [0-270])
-#define IR_MOTDET_TO ((unsigned long) 20000)
+#define IR_MOTDET_TO ((unsigned long) 60000)
 
 #define MANUAL_ASSIST_ACTIVATION_THRESHOLD 1 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
 
