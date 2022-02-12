@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:leonardo",
+    "port": "COM6",
+    "programmer": "arduino:avrisp",
+    "sketch": "smart_deadbolt_controller_arduino_code.ino"
+}

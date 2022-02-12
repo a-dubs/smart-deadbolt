@@ -1,4 +1,25 @@
 #include <LibPrintf.h>
+#include <FastLED.h>
+
+
+
+//////////// MY SENSORS STUFF /////////////
+// https://www.mysensors.org/download/sensor_api_20
+// Enable debug prints
+// #define MY_DEBUG
+
+#define MY_RF24_CE_PIN 7
+#define MY_RF24_CS_PIN 8
+
+// Enable and select radio type attached
+#define MY_RADIO_RF24
+
+#include <MySensors.h>
+
+// MySensors Sensor & Actuator IDs
+#define DEADBOLT_ID 30 // ID of the deadbolt actuator
+#define MOTDET_ID 31  // ID of the deadbolt actuator
+// #define HAND_ID 32  // ID of the 
 
 #define IR_MOT_DET_PIN 7
 #define PERSON_PRESENT_PIN 3
@@ -11,13 +32,13 @@
 #define LOCKED 1
 #define UNLOCKED 0
 
-#define SETUP_MODE false
+#define SETUP_MODE 1
 
 #define LOCKED_POT_POS 210 // min value potentiometer must read for door to be "locked" (in degrees [0-270])
 #define UNLOCKED_POT_POS  20 // max value potentiometer must read for door to be "locked" (in degrees [0-270])
 #define IR_MOTDET_TO ((unsigned long) 60000)
 
-#define MANUAL_ASSIST_ACTIVATION_THRESHOLD 1 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
+#define MANUAL_ASSIST_ACTIVATION_THRESHOLD 2 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
 
 unsigned long last_time_present = 0;
 bool person_present = false;
@@ -26,8 +47,34 @@ short gear_pot_rot = 0;
 bool deadbolt_current_state = false;
 bool deadbolt_target_state = true;
 bool motor_on = false;
-short pot_value_when_stopped;  // value read by potentiometer after deadbolt was finished being moved by motor [0-1024]
-short pot_value;
+short gear_pot_val_when_stopped;  // value read by potentiometer after deadbolt was finished being moved by motor [0-1024]
+short gear_pot_val;
+bool main_loop_entered = false;
+
+MyMessage deadbolt_msg(DEADBOLT_ID, V_LOCK_STATUS);
+MyMessage motdet_msg(MOTDET_ID, V_LOCK_STATUS);
+
+void presentation()
+{
+    // Send the sketch version information to the gateway and Controller
+    sendSketchInfo("Smart Deadbolt Controller", "1.1");
+
+    // Register all sensors to gw (they will be created as child devices)
+    present(DEADBOLT_ID, S_LOCK);
+    present(MOTDET_ID, S_MOTION);
+}
+
+// receive message from Gateway for deadbolt motor
+void receive(const MyMessage &msg)
+{
+  printf("Message received for sensor #%d\n", msg.getSensor());
+  if (msg.getType() == V_LOCK_STATUS)
+  {
+    // printf("Message received for sensor #%d\n", msg.getSensor());
+    printf(":D\n");
+  }
+}
+
 void unlockDeadbolt(void)
 {
   deadbolt_target_state = UNLOCKED;
@@ -50,12 +97,14 @@ void lockDeadbolt(void)
 
 void stopDeadbolt(void)
 {
+
   motor_on = false;
 //  printf("Stopping Deadbolt Motor...\n");
   digitalWrite(MOTOR_BACKWARD, LOW);
   digitalWrite(MOTOR_FORWARD, LOW);
-  delay(10); // pause to let everything settle to a rest
-  pot_value_when_stopped = analogRead(GEAR_POT);
+  wait(10); // pause to let everything settle to a rest
+  gear_pot_val_when_stopped = analogRead(GEAR_POT);
+  send(deadbolt_msg.set(deadbolt_current_state?"1":"0"));
 }
 
 void setup() {
@@ -74,11 +123,21 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(IR_MOT_DET_PIN), presenceISR, RISING);
   }
   Serial.begin(115200);
+  printf("Setup() complete! Serial connected.\n");
 }
 
 void loop() {
 
 
+if (!main_loop_entered)
+{
+  Serial.print("\n\n\n< ENTERED MAIN LOOP >\n\n\n"); 
+  main_loop_entered = true;
+}
+ 
+
+if (!SETUP_MODE)
+{
     //////////////////////////////////////
     // PRESENCE DETECTION CODE // 
     /////////////////////////////////////
@@ -94,9 +153,9 @@ void loop() {
       person_present = false;
     }
     digitalWrite(PERSON_PRESENT_PIN, person_present);
-
-  gear_pot_rot = (analogRead(GEAR_POT) * 270.0) / 1024.0;
-
+}
+    gear_pot_rot = (analogRead(GEAR_POT) * 270.0) / 1024.0;
+    gear_pot_val = analogRead(GEAR_POT);
 
     //////////////////////////////////////
     // DEADBOLT CONTROL CODE // 
@@ -106,7 +165,6 @@ void loop() {
     // if deadbolt has been locked
     if (gear_pot_rot >= LOCKED_POT_POS)
     {
-//      deadbolt_current_state = LOCKED;
       if (deadbolt_current_state != LOCKED)
       {
         if (deadbolt_current_state == LOCKED)
@@ -119,7 +177,6 @@ void loop() {
     // if deadbolt has been unlocked
     else if (gear_pot_rot <= UNLOCKED_POT_POS)
     {
-//      deadbolt_current_state = UNLOCKED;
       if (deadbolt_current_state != UNLOCKED)
       {
         if (deadbolt_current_state == LOCKED)
@@ -129,25 +186,25 @@ void loop() {
         stopDeadbolt();
       }
     }
-    pot_value = analogRead(GEAR_POT);
+    
     // if deadbolt has been moved manually 
-    else if (!motor_on && 
-        (  pot_value - pot_value_when_stopped <= -MANUAL_ASSIST_ACTIVATION_THRESHOLD
-        || pot_value - pot_value_when_stopped >= MANUAL_ASSIST_ACTIVATION_THRESHOLD))
+    if (!motor_on && 
+        (  gear_pot_val - gear_pot_val_when_stopped <= -MANUAL_ASSIST_ACTIVATION_THRESHOLD
+        || gear_pot_val - gear_pot_val_when_stopped >= MANUAL_ASSIST_ACTIVATION_THRESHOLD))
     {
         // if currently locked
         if (deadbolt_current_state == LOCKED 
         // and the deadbolt has been turned in the unlock direction
-        && pot_value - pot_value_when_stopped <= -MANUAL_ASSIST_ACTIVATION_THRESHOLD)
+        && gear_pot_val - gear_pot_val_when_stopped <= -MANUAL_ASSIST_ACTIVATION_THRESHOLD)
         {
-            delay(1000);
+            wait(1000);
             unlockDeadbolt();
         }
         else if (deadbolt_current_state == UNLOCKED 
         // and the deadbolt has been turned in the lock direction
-        && pot_value - pot_value_when_stopped >= MANUAL_ASSIST_ACTIVATION_THRESHOLD)
+        && gear_pot_val - gear_pot_val_when_stopped >= MANUAL_ASSIST_ACTIVATION_THRESHOLD)
         {
-            delay(1000);
+            wait(1000);
             lockDeadbolt();
         }
     }
@@ -179,7 +236,7 @@ void loop() {
 //    }
 //  }
 //
-
+  printf("penis");
     //////////////////////////////////////
     // DEBUG & TESTING W/ SERIAL CODE // 
     /////////////////////////////////////
@@ -193,14 +250,18 @@ void loop() {
     else if (ui == 'u')
     {
       unlockDeadbolt();
+      wait(50);
+      stopDeadbolt();
     }
     else if (ui == 'l')
     {
       lockDeadbolt();
+      wait(50);
+      stopDeadbolt();
     }
     else if (ui == 'p')
     {
-      printf("gear potentiometer position [0-270deg] %d:\n", gear_pot_rot);
+      printf("gear potentiometer rotation [0-270deg]: %d ; raw value: %d\n", gear_pot_rot, gear_pot_val);
     }
     else if (ui == 'd')
     {
@@ -209,7 +270,7 @@ void loop() {
       printf("Deadbolt is currently %s!\n", motor_on == true ? "moving" : "stopped");
     }
   }
-  delay(10);
+  wait(10);
 //  
 //
 //  
