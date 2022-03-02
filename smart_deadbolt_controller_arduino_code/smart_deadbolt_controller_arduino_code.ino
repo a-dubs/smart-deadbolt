@@ -1,5 +1,6 @@
 #include <LibPrintf.h>
 #include <FastLED.h>
+#include <Bounce2.h>
 
 
 
@@ -25,12 +26,14 @@
 #define FISHTANK_LIGHT_ID 35  // ID for a dummy sensor that will allow for creation of "light" entity in HASS
 #define DINING_TABLE_LIGHT_ID 36  // ID for a dummy sensor that will allow for creation of "light" entity in HASS
 
-#define IR_MOT_DET_PIN 2
-#define PERSON_PRESENT_PIN 3
+#define MOT_DET_PIN 2
+#define PERSON_PRESENT_PIN 5
 #define MOTOR_FORWARD A0
 #define MOTOR_BACKWARD A1
 #define GEAR_POT A3
 #define MOTOR_SLEEP A2
+#define DOOR_LIMIT_SWITCH A4
+#define IR_PROXIMITY_SENSOR A5
 
 #define LOCKED 1
 #define UNLOCKED 0
@@ -39,16 +42,25 @@
 
 #define LOCKED_POT_POS 260 // min value potentiometer must read for door to be "locked" (in degrees [0-270])
 #define UNLOCKED_POT_POS  80 // max value potentiometer must read for door to be "unlocked" (in degrees [0-270])
+#define MOTOR_MIN_OVERSHOOT 5  // how many degrees further than the minimum locked/unlocked potentiometer pos must the motor turn the deadbolt until stopping
+#define MOTOR_STALL_TIMEOUT 100 // how many ms motor must be "stalled" for until it is considered officially stalled
+#define MOTOR_STALL_DIST 3 // min number of degrees that must be advanced within the motor stall timeout window  for it to be considered officially stalled
+
 #define IR_MOTDET_TO ((unsigned long) 60000)
 
 #define MANUAL_ASSIST_ACTIVATION_THRESHOLD 5 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
 
+Bounce2::Button door_limit_switch_debouncer = Bounce2::Button();
+
 unsigned long last_time_present = 0;
+unsigned long time_motor_started = 0;
+unsigned long last_time_pot_advanced = 0;
 bool person_present = false;
 bool person_present_recent_val = false;
 short gear_pot_rot = 0;
-bool deadbolt_current_state = false;
-bool deadbolt_target_state = true;
+short new_gear_pot_rot = 0;
+bool deadbolt_current_state = UNLOCKED;
+bool deadbolt_target_state = UNLOCKED;
 bool motor_on = false;
 short gear_pot_val_when_stopped;  // value read by potentiometer after deadbolt was finished being moved by motor [0-1024]
 short gear_pot_val;
@@ -100,14 +112,16 @@ void receive(const MyMessage &msg)
 
 void unlockDeadbolt(void)
 {
+  
   deadbolt_target_state = UNLOCKED;
   motor_on = true;
  printf("Unlocking Deadbolt...\n");
   digitalWrite(MOTOR_BACKWARD, HIGH);
   digitalWrite(MOTOR_FORWARD, LOW);
   send(deadbolt_msg.set(deadbolt_target_state?"1":"0"));
+  time_motor_started = millis();
+  last_time_pot_advanced = millis();
 }
-
 
 void lockDeadbolt(void)
 {
@@ -117,13 +131,15 @@ void lockDeadbolt(void)
   digitalWrite(MOTOR_BACKWARD, LOW);
   digitalWrite(MOTOR_FORWARD, HIGH);
   send(deadbolt_msg.set(deadbolt_target_state?"1":"0"));
+  time_motor_started = millis();
+  last_time_pot_advanced = millis();
 }
 
 void stopDeadbolt(void)
 {
 
   motor_on = false;
- printf("Stopping Deadbolt Motor...\n");
+ printf("Stopping Deadbolt Motor. Action took %dms\n", millis()-time_motor_started);
   digitalWrite(MOTOR_BACKWARD, LOW);
   digitalWrite(MOTOR_FORWARD, LOW);
   wait(100); // pause to let everything settle to a rest
@@ -133,7 +149,7 @@ void stopDeadbolt(void)
 
 void setup() {
   // put your setup code here, to run once:
-  // pinMode(IR_MOT_DET_PIN, INPUT);
+  // pinMode(MOT_DET_PIN, INPUT);
   // pinMode(PERSON_PRESENT_PIN, OUTPUT);
   pinMode(MOTOR_FORWARD, OUTPUT);
   pinMode(MOTOR_BACKWARD, OUTPUT);
@@ -144,8 +160,24 @@ void setup() {
   digitalWrite(MOTOR_SLEEP, HIGH);
   // if (!SETUP_MODE)
   // {
-  //   attachInterrupt(digitalPinToInterrupt(IR_MOT_DET_PIN), presenceISR, RISING);
+  //   attachInterrupt(digitalPinToInterrupt(MOT_DET_PIN), presenceISR, RISING);
   // }
+
+  // BUTTON SETUP 
+  
+  // SELECT ONE OF THE FOLLOWING :
+  // 1) IF YOUR BUTTON HAS AN INTERNAL PULL-UP
+  door_limit_switch_debouncer.attach( DOOR_LIMIT_SWITCH ,  INPUT_PULLUP ); // USE INTERNAL PULL-UP
+  // 2) IF YOUR BUTTON USES AN EXTERNAL PULL-UP
+  // button.attach( BUTTON_PIN, INPUT ); // USE EXTERNAL PULL-UP
+
+  // DEBOUNCE INTERVAL IN MILLISECONDS
+  door_limit_switch_debouncer.interval(1); 
+
+  // INDICATE THAT THE HIGH STATE CORRESPONDS TO PHYSICALLY PRESSING THE BUTTON
+  door_limit_switch_debouncer.setPressedState(HIGH); 
+
+
   Serial.begin(115200);
   printf("Setup() complete! Serial connected.\n");
 }
@@ -153,14 +185,18 @@ void setup() {
 void loop() {
   if (!main_loop_entered)
   {
+    time_motor_started = millis();
     stopDeadbolt();
+    // update limit switch debouncer
+    door_limit_switch_debouncer.update();
+    door_open = door_limit_switch_debouncer.read() != 0;
       // enable motor controller
     digitalWrite(MOTOR_SLEEP, HIGH);
     Serial.print("\n\n\n< ENTERED MAIN LOOP >\n\n\n"); 
     main_loop_entered = true;
     send(deadbolt_msg.set(deadbolt_current_state?"1":"0"));
     send(motdet_msg.set("0"));
-    send(door_msg.set("0"));
+    send(door_msg.set(door_open ? "1" : "0"));
     send(kitchen_light_level_msg.set(100));
     send(kitchen_light_state_msg.set("1"));
     send(couch_corner_light_level_msg.set(100));
@@ -172,8 +208,8 @@ void loop() {
   }
   
 
-  if (!SETUP_MODE)
-  {
+  // if (!SETUP_MODE)
+  // {
       //////////////////////////////////////
       // PRESENCE DETECTION CODE // 
       /////////////////////////////////////
@@ -189,13 +225,20 @@ void loop() {
   //       person_present = false;
   //     }
   //     digitalWrite(PERSON_PRESENT_PIN, person_present);
-  }
+  // }
      
 
       //////////////////////////////////////
       // DEADBOLT CONTROL CODE // 
       /////////////////////////////////////
-       gear_pot_rot = (analogRead(GEAR_POT) * 270.0) / 1024.0;
+      new_gear_pot_rot = (analogRead(GEAR_POT) * 270.0) / 1024.0;
+      if ((deadbolt_target_state == LOCKED && new_gear_pot_rot > gear_pot_rot) 
+      || (deadbolt_target_state == UNLOCKED && new_gear_pot_rot < gear_pot_rot))
+      {
+        last_time_pot_advanced = millis();
+      }
+       
+       gear_pot_rot = new_gear_pot_rot;
       gear_pot_val = analogRead(GEAR_POT);
     if (!SETUP_MODE)
     {
@@ -231,6 +274,60 @@ void loop() {
           stopDeadbolt();
         }
       }
+
+      // if motor has stalled
+      if (motor_on && millis() - last_time_pot_advanced >= MOTOR_STALL_TIMEOUT)
+      {
+        printf("MOTOR STALLED!\n");
+        if (deadbolt_target_state == LOCKED)
+        {
+          unlockDeadbolt();
+        }
+        else 
+        {
+          lockDeadbolt();
+        }
+      }
+
+      // if door is open / ajar and deadbolt is currently unlocked and is trying to be unlocked
+      if (door_open && motor_on && deadbolt_target_state == LOCKED && deadbolt_current_state == UNLOCKED)
+      {
+        printf("Door is ajar and deadbolt was attempting to lock... forcing unlock now!\n");
+        unlockDeadbolt();
+      }
+      
+
+      // update limit switch debouncer
+      door_limit_switch_debouncer.update();
+      
+      // limit switch's state has changed
+      if ( door_limit_switch_debouncer.changed() ) { 
+        
+        // if limit switch is NOT "pressed" ( == 0) then door has been opened
+        door_open = door_limit_switch_debouncer.read() != 0;
+
+        // send updated door state msg
+        send(door_msg.set(door_open ? "1" : "0"));
+
+        // if door has just been opened
+        if (door_open)
+        {
+          printf("Door was just opened!\n");
+        }
+        // if door has just been closed
+        else 
+        {
+          printf("Door was just closed!\n");
+          lockDeadbolt();
+        }
+
+      }
+
+      if(digitalRead(IR_PROXIMITY_SENSOR) == HIGH && !door_open)
+      {
+
+      }
+
       
       // // if deadbolt has been moved manually 
       // if (!motor_on && 
@@ -256,6 +353,8 @@ void loop() {
       //         printf("manual LOCK assist activated\n");
       //     }
       // }
+
+
 
     }  
 
