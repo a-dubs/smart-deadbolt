@@ -1,7 +1,7 @@
 #include <LibPrintf.h>
 #include <FastLED.h>
 #include <Bounce2.h>
-
+#include <SharpIR.h>
 
 
 //////////// MY SENSORS STUFF /////////////
@@ -33,10 +33,19 @@
 #define GEAR_POT A3
 #define MOTOR_SLEEP A2
 #define DOOR_LIMIT_SWITCH A4
-#define IR_PROXIMITY_SENSOR A5
+#define IR_DISTANCE_SENSOR A5
+#define DEADBOLT_TOGGLE_BUTTON A6
 
 #define LOCKED 1
 #define UNLOCKED 0
+
+#define GP2Y0A21YK0F_MODEL_CODE 1080
+/* Model :
+  GP2Y0A02YK0F --> 20150
+  GP2Y0A21YK0F --> 1080
+  GP2Y0A710K0F --> 100500
+  GP2YA41SK0F --> 430
+*/
 
 #define SETUP_MODE 0
 
@@ -45,12 +54,13 @@
 #define MOTOR_MIN_OVERSHOOT 5  // how many degrees further than the minimum locked/unlocked potentiometer pos must the motor turn the deadbolt until stopping
 #define MOTOR_STALL_TIMEOUT 100 // how many ms motor must be "stalled" for until it is considered officially stalled
 #define MOTOR_STALL_DIST 3 // min number of degrees that must be advanced within the motor stall timeout window  for it to be considered officially stalled
-
+#define HAND_PRESENT_MAX_DIST 60 // in cm
 #define IR_MOTDET_TO ((unsigned long) 60000)
-
 #define MANUAL_ASSIST_ACTIVATION_THRESHOLD 5 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
 
 Bounce2::Button door_limit_switch_debouncer = Bounce2::Button();
+Bounce2::Button deadbolt_toggle_button = Bounce2::Button();
+SharpIR hand_distance_sensor(GP2Y0A21YK0F_MODEL_CODE, IR_DISTANCE_SENSOR);
 
 unsigned long last_time_present = 0;
 unsigned long time_motor_started = 0;
@@ -65,7 +75,9 @@ bool motor_on = false;
 short gear_pot_val_when_stopped;  // value read by potentiometer after deadbolt was finished being moved by motor [0-1024]
 short gear_pot_val;
 bool main_loop_entered = false;
+unsigned char hand_distance = 255;  // average of past few readings of IR's sensors distance in cm 
 bool door_open = false;
+
 MyMessage deadbolt_msg(DEADBOLT_ID, V_ARMED);
 MyMessage motdet_msg(MOTDET_ID, V_TRIPPED);
 MyMessage door_msg(DOOR_ID, V_TRIPPED);
@@ -163,19 +175,16 @@ void setup() {
   //   attachInterrupt(digitalPinToInterrupt(MOT_DET_PIN), presenceISR, RISING);
   // }
 
-  // BUTTON SETUP 
-  
-  // SELECT ONE OF THE FOLLOWING :
-  // 1) IF YOUR BUTTON HAS AN INTERNAL PULL-UP
   door_limit_switch_debouncer.attach( DOOR_LIMIT_SWITCH ,  INPUT_PULLUP ); // USE INTERNAL PULL-UP
-  // 2) IF YOUR BUTTON USES AN EXTERNAL PULL-UP
-  // button.attach( BUTTON_PIN, INPUT ); // USE EXTERNAL PULL-UP
+  deadbolt_toggle_button.attach( DOOR_LIMIT_SWITCH ,  INPUT_PULLUP ); // USE INTERNAL PULL-UP
 
   // DEBOUNCE INTERVAL IN MILLISECONDS
   door_limit_switch_debouncer.interval(1); 
+  deadbolt_toggle_button.interval(1); 
 
   // INDICATE THAT THE HIGH STATE CORRESPONDS TO PHYSICALLY PRESSING THE BUTTON
   door_limit_switch_debouncer.setPressedState(HIGH); 
+  deadbolt_toggle_button.setPressedState(HIGH); 
 
 
   Serial.begin(115200);
@@ -323,9 +332,30 @@ void loop() {
 
       }
 
-      if(digitalRead(IR_PROXIMITY_SENSOR) == HIGH && !door_open)
-      {
+      
+      deadbolt_toggle_button.update();
+      
+      if ( deadbolt_toggle_button.changed() ) { 
+        
+        // if button has been pressed
+        if (deadbolt_toggle_button.read() == 0);
+        {
+          if (deadbolt_target_state == LOCKED)
+            unlockDeadbolt();
+          else
+            lockDeadbolt();
+        }
 
+      }
+      
+      hand_distance = hand_distance_sensor.distance( false );
+
+      // if door is shut, and deadbolt is either already locked or currently being locked
+      if(hand_distance < HAND_PRESENT_MAX_DIST && !door_open && deadbolt_target_state == LOCKED)
+      {
+        printf("Hand Detected ( %d cm )\n", hand_distance);
+        // unlock deadbolt
+        unlockDeadbolt();
       }
 
       
@@ -403,6 +433,19 @@ void loop() {
       printf("Deadbolt is currently %s!\n", deadbolt_current_state == LOCKED ? "locked" : "unlocked");
       printf("Deadbolt's target state is %s!\n", deadbolt_target_state == LOCKED ? "locked" : "unlocked");
       printf("Deadbolt is currently %s!\n", motor_on == true ? "moving" : "stopped");
+    }
+    // test out hand distance sensor for 5 seconds
+    else if (ui == 'h' && !motor_on)
+    {
+      printf("\n-------------- Testing Hand Distance Sensor ---------------\n")
+      unsigned long start_time = millis();
+      while (millis() - start_time < 5000)
+      {
+        hand_distance = hand_distance_sensor.distance( false );
+        printf("%d cm | ", hand_distance);
+        wait(50);      
+      }
+      printf("\n-----------------------------------------------------------\n")
     }
   }
   wait(10);
