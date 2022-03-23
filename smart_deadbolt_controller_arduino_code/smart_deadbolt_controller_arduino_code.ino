@@ -2,6 +2,40 @@
 #include <FastLED.h>
 #include <Bounce2.h>
 #include <SharpIR.h>
+    
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// Arduino Pro Mini Pinout Resrvations ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// [ TX   ]   Pin 0  - 
+// [ RX   ]   Pin 1  - 
+// [ INT  ]   Pin 2  - 
+// [ INT  ] ~ Pin 3  - 
+// [      ]   Pin 4  - 
+// [      ] ~ Pin 5  - 
+// [      ] ~ Pin 6  - Deadbolt Toggle Button Digital Input
+// [      ]   Pin 7  - RF24 CE
+// [      ]   Pin 8  - RF24 CS
+// [      ] ~ Pin 9  - Limit Switch Digital Input
+// [ SS   ] ~ Pin 10 - RFID Reader RST
+// [ MOSI ] ~ Pin 11 - RF24, RFID Reader
+// [ MISO ]   Pin 12 - RF24, RFID Reader
+// [ SCK  ]   Pin 13 - RF24, RFID Reader
+// [      ]   Pin A0 - Motor Forward Digital Output
+// [      ]   Pin A1 - Motor Backward Digital Output
+// [      ]   Pin A2 - Motor Driver Sleep Digital Output (HIGH = Enable)
+// [      ]   Pin A3 - Potentiometer Analog Input
+// [      ]   Pin A4 - Ultrasonic Distance Sensor TRIG
+// [      ]   Pin A5 - Ultrasonic Distance Sensor ECHO
+// [      ]   Pin A6 - 
+// [      ]   Pin A6 - 
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////// MY SENSORS STUFF /////////////
@@ -26,15 +60,18 @@
 #define FISHTANK_LIGHT_ID 35  // ID for a dummy sensor that will allow for creation of "light" entity in HASS
 #define DINING_TABLE_LIGHT_ID 36  // ID for a dummy sensor that will allow for creation of "light" entity in HASS
 
-#define MOT_DET_PIN 2
-#define PERSON_PRESENT_PIN 5
+// #define MOT_DET_PIN 2
+// #define PERSON_PRESENT_PIN 5
 #define MOTOR_FORWARD A0
 #define MOTOR_BACKWARD A1
 #define GEAR_POT A3
 #define MOTOR_SLEEP A2
-#define DOOR_LIMIT_SWITCH A4
-#define IR_DISTANCE_SENSOR A5
-#define DEADBOLT_TOGGLE_BUTTON A6
+#define DOOR_LIMIT_SWITCH 9
+// #define IR_DISTANCE_SENSOR 
+#define DEADBOLT_TOGGLE_BUTTON 6
+#define ULTRASONIC_TRIG 4
+#define ULTRASONIC_ECHO 5
+
 
 #define LOCKED 1
 #define UNLOCKED 0
@@ -348,7 +385,7 @@ void loop() {
 
       }
       
-      hand_distance = hand_distance_sensor.distance( false );
+      hand_distance = hand_distance_sensor.getDistance( false );
 
       // if door is shut, and deadbolt is either already locked or currently being locked
       if(hand_distance < HAND_PRESENT_MAX_DIST && !door_open && deadbolt_target_state == LOCKED)
@@ -437,15 +474,16 @@ void loop() {
     // test out hand distance sensor for 5 seconds
     else if (ui == 'h' && !motor_on)
     {
-      printf("\n-------------- Testing Hand Distance Sensor ---------------\n")
+      printf("\n-------------- Testing Hand Distance Sensor ---------------\n");
       unsigned long start_time = millis();
       while (millis() - start_time < 5000)
       {
-        hand_distance = hand_distance_sensor.distance( false );
-        printf("%d cm | ", hand_distance);
-        wait(50);      
+        hand_distance = hand_distance_sensor.getDistance();
+        // printf("%d cm | ", hand_distance);
+        Serial.println(hand_distance);
+        delay(10);      
       }
-      printf("\n-----------------------------------------------------------\n")
+      printf("\n-----------------------------------------------------------\n");
     }
   }
   wait(10);
