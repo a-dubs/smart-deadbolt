@@ -6,12 +6,46 @@
  * Created by FILIPEFLOP
  * 
  */
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// Arduino Pro Mini Pinout Resrvations ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// [ TX   ]   Pin 0  - Serial Comm w/ DB Arduino
+// [ RX   ]   Pin 1  - Serial Comm w/ DB Arduino
+// [ INT  ]   Pin 2  - 
+// [ INT  ] ~ Pin 3  - 
+// [      ]   Pin 4  - RFID Auth Accepted LED 
+// [      ] ~ Pin 5  - 
+// [      ] ~ Pin 6  - 
+// [      ]   Pin 7  - KP_C1
+// [      ]   Pin 8  - KP_C2
+// [      ] ~ Pin 9  - 
+// [ SS   ] ~ Pin 10 - RFID Reader SS Signal
+// [ MOSI ] ~ Pin 11 - RFID Reader 
+// [ MISO ]   Pin 12 - RFID Reader
+// [ SCK  ]   Pin 13 - RFID Reader
+// [      ]   Pin A0 - 
+// [      ]   Pin A1 - 
+// [      ]   Pin A2 - KP_C3
+// [      ]   Pin A3 - KP_C4
+// [      ]   Pin A4 - KP_R1
+// [      ]   Pin A5 - KP_R2
+// [      ]   Pin A6 - KP_R3
+// [      ]   Pin A7 - KP_R4
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
  
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define RFID_ACCEPTED_LED_PIN 5
-#define HEARTBEAT_LED_PIN 6
+#define RFID_ACCEPTED_LED_PIN 4
+// #define HEARTBEAT_LED_PIN 6
 #define RFID_SS_PIN 10
 #define RFID_RST_PIN 4
 MFRC522 mfrc522(RFID_SS_PIN, RFID_RST_PIN);   // Create MFRC522 instance.
@@ -22,7 +56,7 @@ void setup()
 {
   pinMode(RFID_ACCEPTED_LED_PIN, OUTPUT);
   
-  pinMode(HEARTBEAT_LED_PIN, OUTPUT);
+//   pinMode(HEARTBEAT_LED_PIN, OUTPUT);
 //  mySerial.begin(2400);   // Initiate a serial communication
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
@@ -75,10 +109,10 @@ void loop()
       Serial.write('!');
     }
   }
-    digitalWrite(HEARTBEAT_LED_PIN, HIGH);
+    // digitalWrite(HEARTBEAT_LED_PIN, HIGH);
     
     Serial.write('h');
   delay(10);
-    digitalWrite(HEARTBEAT_LED_PIN, LOW);
+    // digitalWrite(HEARTBEAT_LED_PIN, LOW);
   delay(90);
 } 

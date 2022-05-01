@@ -48,6 +48,8 @@
 #define ULTRASONIC_TRIG A4
 #define ULTRASONIC_ECHO A5
 #define LED_STRIP_DATA 9
+#define MY_RF24_CE_PIN 7
+#define MY_RF24_CS_PIN 8
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,8 +60,7 @@
 // Enable debug prints
 // #define MY_DEBUG
 //#define MY_NODE_ID  2
-#define MY_RF24_CE_PIN 7
-#define MY_RF24_CS_PIN 8
+
 
 // Enable and select radio type attached
 #define MY_RADIO_RF24
@@ -83,7 +84,7 @@
 #define LOCKED 1
 #define UNLOCKED 0
 #define SETUP_MODE 0
-#define ULTRASONIC_TRIALS 3
+#define ULTRASONIC_TRIALS 1
 #define LOCKED_POT_POS 190       // min value potentiometer must read for door to be "locked" (in degrees [0-270])
 #define UNLOCKED_POT_POS 20      // max value potentiometer must read for door to be "unlocked" (in degrees [0-270])
 #define MOTOR_MIN_OVERSHOOT 5    // how many degrees further than the minimum locked/unlocked potentiometer pos must the motor turn the deadbolt until stopping
