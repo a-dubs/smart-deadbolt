@@ -90,7 +90,7 @@
 #define MOTOR_MIN_OVERSHOOT 5    // how many degrees further than the minimum locked/unlocked potentiometer pos must the motor turn the deadbolt until stopping
 #define MOTOR_STALL_TIMEOUT 200  // how many ms motor must be "stalled" for until it is considered officially stalled
 #define MOTOR_STALL_DIST 1       // min number of degrees that must be advanced within the motor stall timeout window  for it to be considered officially stalled
-#define HAND_PRESENT_MAX_DIST 75 // in cm
+#define HAND_PRESENT_MAX_DIST 50 // in cm
 #define IR_MOTDET_TO ((unsigned long)60000)
 #define HEARTBEAT_INTERVAL 1000              // in ms
 #define MANUAL_ASSIST_ACTIVATION_THRESHOLD 5 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
@@ -694,7 +694,7 @@ void loop()
 
               last_time_hand_detected = millis();
               // 
-              if (millis() - last_time_door_closed > 3000)
+              if (millis() - last_time_door_closed > 2000)
               {
                   if (motor_on && deadbolt_target_state == LOCKED)
                   {
