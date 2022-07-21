@@ -97,6 +97,7 @@
 #define KEEP_UNLOCKED_DUR 15000              // in ms, how long should deadbolt stay unlocked for before auto re-locking after being unlocked
 #define DOOR_FULLY_OPEN_MIN_DUR 2000
 
+#define ULTRASONIC_ENABLED false
 // Bounce2::Button door_limit_switch_debouncer = Bounce2::Button();
 Bounce2::Button deadbolt_toggle_button = Bounce2::Button();
 #ifdef RFID_ENABLED
@@ -252,6 +253,7 @@ short gear_pot_val_when_stopped; // value read by potentiometer after deadbolt w
 short gear_pot_val;
 bool main_loop_entered = false;
 bool door_open = false;
+bool button_pressed = false;
 bool door_limit_switch_pressed = false;
 bool rfid_accepted = false;
 unsigned int hand_distance = 1000; // in cm ; set to high starting value so nothing gets triggered at boot
@@ -288,7 +290,7 @@ void presentation()
 {
     set_led_strip(MY_OFF);
     // Send the sketch version information to the gateway and Controller
-    sendSketchInfo("Backdoor MySensors Node", "22-04-03");
+    sendSketchInfo("Backdoor MySensors Node V3", "07-07-22");
 
     // Register all sensors to gw (they will be created as child devices)
     present(DEADBOLT_ID, S_LOCK);
@@ -307,7 +309,7 @@ void receive(const MyMessage &msg)
     printf("Message received for sensor #%d\n", msg.getSensor());
     if (msg.getType() == V_LOCK_STATUS)
     {
-        bool lock_status_recvd = msg.getBool();
+        bool lock_status_recvd = !msg.getBool();  // 1 = unlocked for HASS type lock , so invert it
         // printf("Message received for sensor #%d\n", msg.getSensor());
         // if received LOCK command
         // if (msg.getSensor() == RFID_ID)
@@ -340,11 +342,11 @@ void unlockDeadbolt(void)
         {
             motor_on = true;
             printf("Unlocking Deadbolt...\n");
-            digitalWrite(MOTOR_BACKWARD, HIGH);
-            digitalWrite(MOTOR_FORWARD, LOW);
+            digitalWrite(MOTOR_BACKWARD, LOW);
+            digitalWrite(MOTOR_FORWARD, HIGH);
             time_motor_started = millis();
             last_time_pot_advanced = millis();
-            send(deadbolt_msg.set(deadbolt_target_state ? "1" : "0"));
+            send(deadbolt_msg.set(deadbolt_target_state ? "0" : "1"));
             set_led(LEDS_MOTOR_STATE, MOTOR_STATE_ON_COLOR);
             set_led(LEDS_DB_T_STATE, DB_STATE_UNLOCKED_COLOR);
             set_led(LEDS_MOTOR_WARN, MOTOR_WARN_NONE_COLOR);
@@ -358,9 +360,9 @@ void unlockDeadbolt(void)
     {
         deadbolt_target_state = UNLOCKED;
         last_time_unlocked = millis();
-        //    printf("unlockDeadbolt(): Deadbolt already unlocked!\n");
+        printf("unlockDeadbolt(): Deadbolt already unlocked!\n");
         stopDeadbolt();
-        //  send(deadbolt_msg.set(deadbolt_target_state?"1":"0"));
+        //  send(deadbolt_msg.set(deadbolt_target_state?"0":"1"));
     }
     set_led(LEDS_DB_T_STATE, DB_STATE_UNLOCKED_COLOR);
 }
@@ -376,11 +378,11 @@ void lockDeadbolt(void)
           
             motor_on = true;
             printf("Locking Deadbolt...\n");
-            digitalWrite(MOTOR_BACKWARD, LOW);
-            digitalWrite(MOTOR_FORWARD, HIGH);
+            digitalWrite(MOTOR_BACKWARD, HIGH);
+            digitalWrite(MOTOR_FORWARD, LOW);
             time_motor_started = millis();
             last_time_pot_advanced = millis();
-            send(deadbolt_msg.set(deadbolt_target_state ? "1" : "0"));
+            send(deadbolt_msg.set(deadbolt_target_state ? "0" : "1"));
             set_led(LEDS_MOTOR_STATE, MOTOR_STATE_ON_COLOR);
             set_led(LEDS_DB_T_STATE, DB_STATE_LOCKED_COLOR);
             set_led(LEDS_MOTOR_WARN, MOTOR_WARN_NONE_COLOR);
@@ -394,7 +396,7 @@ void lockDeadbolt(void)
         deadbolt_target_state = LOCKED;
         //    printf("lockDeadbolt(): Deadbolt already locked!\n");
         stopDeadbolt();
-        send(deadbolt_msg.set(deadbolt_target_state ? "1" : "0"));
+        send(deadbolt_msg.set(deadbolt_target_state ? "0" : "1"));
     }
 }
 
@@ -409,7 +411,7 @@ void stopDeadbolt(void)
         digitalWrite(MOTOR_BACKWARD, LOW);
         digitalWrite(MOTOR_FORWARD, LOW);
         
-        send(deadbolt_msg.set(deadbolt_target_state ? "1" : "0"));
+        send(deadbolt_msg.set(deadbolt_target_state ? "0" : "1"));
         set_led(LEDS_MOTOR_STATE, MOTOR_STATE_OFF_COLOR);
         wait(100); // pause to let everything settle to a rest
     }
@@ -498,6 +500,8 @@ void loop()
 {
     if (!main_loop_entered)
     {
+        set_led(LEDS_HAND_DET, HAND_NOT_DET_COLOR);
+      
         time_motor_started = millis();
         stopDeadbolt();
         door_limit_switch_pressed = digitalRead(DOOR_LIMIT_SWITCH) == LOW; 
@@ -509,7 +513,7 @@ void loop()
         digitalWrite(MOTOR_SLEEP, HIGH);
         Serial.print("\n\n\n< ENTERED MAIN LOOP >\n\n\n");
         main_loop_entered = true;
-        send(deadbolt_msg.set(deadbolt_current_state ? "1" : "0"));
+        send(deadbolt_msg.set(deadbolt_current_state ? "0" : "1"));
         send(motdet_msg.set("0"));
         
         send(door_msg.set(door_open ? "1" : "0"));
@@ -535,7 +539,7 @@ void loop()
 
     gear_pot_rot = new_gear_pot_rot;
     gear_pot_val = analogRead(GEAR_POT);
-  
+    //  printf("gear potentiometer rotation [0-270deg]: %d ; raw value: %d\n", gear_pot_rot, gear_pot_val);
       // if deadbolt has been locked
       if (gear_pot_rot >= LOCKED_POT_POS)
       {
@@ -671,19 +675,24 @@ void loop()
 
       if ( deadbolt_toggle_button.changed() ) {
           
+          printf("deadbolt button has changed\n");
           // if button has been pressed
-          if (deadbolt_toggle_button.read() == 0);
-          {
+          button_pressed = !button_pressed;
+          if (deadbolt_toggle_button.read() == 0 && button_pressed && digitalRead(DEADBOLT_TOGGLE_BUTTON) == LOW);
+          {   
               if (deadbolt_target_state == LOCKED)
               unlockDeadbolt();
-              else
+              else if(deadbolt_current_state == UNLOCKED)
               lockDeadbolt();
-          }
+              
           set_led(LEDS_DB_LAST_TRIG, TRIG_BUTTON_COLOR);
+          
+          printf("deadbolt button has been pressed\n");
+          }
       }
 
       // activate ultrasonic sensor to read hand distance
-      if (millis() - last_time_hand_detected > 500)
+      if (ULTRASONIC_ENABLED && millis() - last_time_hand_detected > 500)
       {
           calc_hand_distance();
 
@@ -754,7 +763,7 @@ void loop()
     if (!motor_on && millis() - last_time_heartbeat > HEARTBEAT_INTERVAL)
     {
         
-        send(deadbolt_msg.set(deadbolt_target_state ? "1" : "0"));
+        send(deadbolt_msg.set(deadbolt_target_state ? "0" : "1"));
         send(door_msg.set(door_open ? "1" : "0"));
         last_time_heartbeat = millis();
     }
