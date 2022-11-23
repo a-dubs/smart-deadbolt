@@ -1,6 +1,6 @@
-# Custom Smart Deadbolt Controller 
+# Custom Smart Deadbolt 
 
-Smart deadbolt controller leveraging MySensors for connectivity running on an Arduino pro micro which manipulates a TT motor to turn a standard deadbolt.
+Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 
 <br>
 
