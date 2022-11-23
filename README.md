@@ -5,12 +5,13 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 <br>
 
 ## Summary
- - Fully custom enclosure and mounting bracket designed by yours truly in Autodesk Inventer and 3D printed in-house
- - Tooless, modular design allowed for rapid prototyping and iterative design
- - Custom designed 3D printed components: Enclosure, door mounting system, motor mount, gear adapter for deadbolt thumb latch, and gear driven by motor with hole for potentiometer
- - Specially designed to not require any modification to existing deadbolt or door (since this is being installed in an apartment)
- - Will be controlled by my Home Assistant smart home ecosystem using secure authentication via my [Secure Smart Apartment Entry Panel](https://github.com/a-dubs/secure-smart-apt-entry-panel)
-   - Leverages NRF24 radio modules to connect to my MySensors network which is controlled by my Home Assistant smart home ecosystem 
+- Attaches to my backdoor’s built-in deadbolt and turns the deadbolt lever to lock and unlock door
+- Seamlessly integrates with my custom smart home ecosystem, allowing for easily monitoring and control from phones and PCs
+- Leverages radio modules for communication with smart home controller 
+- Powered by an Arduino Pro Mini 5v that drives a high torque TT motor 
+- The enclosure and all internal parts were designed from scratch in Autodesk Inventor and 3D printed by yours truly
+- Limit switch senses when door is closed
+- Custom modular design allows for rapid prototyping and iterative design 
 
 <br>
 
