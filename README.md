@@ -66,3 +66,4 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 **Project Progress** : In Progress
 **Project Dates** : Oct '21 - Present
 
+// portfolio.alecwarren.com position priority = 9 (-1 is lowest, 0 is default, 10 is highest)
