@@ -15,8 +15,8 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 - This gear is then turned by the TT motor through a smaller gear with half the teeth which  
 - Limit switch senses when door is closed or open - useful for functionality such as preventing deadbolt from being extended when trying to shut door
 - Potentiometer sitting opposite the motor shaft provides two-fold functionality: 
-  - acts as an axle of sorts for the gear driven by the TT motor
-  - is a highly precise, non-volatile, axle "encoder" that allows for knowing the position of the deadbolt gear, and can thus infer when the deadbolt is turned into the unlocked or locked position
+  - Acts as an axle of sorts for the gear driven by the TT motor
+  - Is a highly precise, non-volatile, axle "encoder" that allows for knowing the position of the deadbolt gear, and can thus infer when the deadbolt is turned into the unlocked or locked position
 - Seamlessly integrates with my custom smart home ecosystem
 - Functionality provided by Smart Home:
   - Automatically locks deadbolt after a minute if it is left unlocked
