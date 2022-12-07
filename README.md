@@ -1,16 +1,30 @@
-# Smart IoT Deadbolt Controller
+# Custom Smart Deadbolt 
 
-Smart deadbolt controller leveraging MySensors for connectivity running on an Arduino pro micro which manipulates a TT motor to turn a standard deadbolt.
+Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 
 <br>
 
 ## Summary
- - Fully custom enclosure and mounting bracket designed by yours truly in Autodesk Inventer and 3D printed in-house
- - Tooless, modular design allowed for rapid prototyping and iterative design
- - Custom designed 3D printed components: Enclosure, door mounting system, motor mount, gear adapter for deadbolt thumb latch, and gear driven by motor with hole for potentiometer
- - Specially designed to not require any modification to existing deadbolt or door (since this is being installed in an apartment)
- - Will be controlled by my Home Assistant smart home ecosystem using secure authentication via my [Secure Smart Apartment Entry Panel](https://github.com/a-dubs/secure-smart-apt-entry-panel)
-   - Leverages NRF24 radio modules to connect to my MySensors network which is controlled by my Home Assistant smart home ecosystem 
+- Attaches to my backdoor’s OEM deadbolt and turns the deadbolt lever to lock and unlock door
+  - Mounts to the door and deadbolt without any adhesive or mounting hardware that could potentially damage the door
+- Leverages radio modules for communication with smart home controller 
+- Powered by an Arduino Pro Mini 5v that drives a high torque TT motor 
+- Comprised of 13 different 3D-printed parts
+  - Designed from scratch in Autodesk Inventor and 3D printed by yours truly
+  - Custom modular design allows for rapid prototyping and iterative design 
+- The deadbolt lever has a 3D-printed adapter that snaps around it (no adhesive necesssary) to convert it into one big gear 
+  - This gear is then turned by the TT motor through a smaller gear with half the teeth which  
+- Limit switch senses when door is closed or open - useful for functionality such as preventing deadbolt from being extended when trying to shut door
+- Potentiometer sitting opposite the motor shaft provides two-fold functionality: 
+  - Acts as an axle of sorts for the gear driven by the TT motor
+  - Is a highly precise, non-volatile, axle "encoder" that allows for knowing the position of the deadbolt gear, and can thus infer when the deadbolt is turned into the unlocked or locked position
+- Seamlessly integrates with my custom smart home ecosystem
+- Functionality provided by Smart Home:
+  - Automatically locks deadbolt after a minute if it is left unlocked
+  - Remote monitoring of whether door is ajar/open
+  - Remote monitoring and control of the deadbolt from anywhere, enabling the ability to let guests into home remotely
+  - Function that prevents deadbolt from locking for any reason - useful for when you want to step outside quickly without needing your keys or a smarthpone 
+- Currently on its **3rd** major version (V3)
 
 <br>
 
@@ -55,3 +69,4 @@ Smart deadbolt controller leveraging MySensors for connectivity running on an Ar
 **Project Progress** : In Progress
 **Project Dates** : Oct '21 - Present
 
+<!-- portfolio.alecwarren.com position priority = 9 (-1 is lowest, 0 is default, 10 is highest) -->
