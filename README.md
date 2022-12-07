@@ -24,6 +24,8 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
   - Remote monitoring of whether door is ajar/open
   - Remote monitoring and control of the deadbolt from anywhere, enabling the ability to let guests into home remotely
   - Function that prevents deadbolt from locking for any reason - useful for when you want to step outside quickly without needing your keys or a smarthpone 
+- Currently on its **3rd** major version (V3)
+
 <br>
 
 ## Image Gallery
