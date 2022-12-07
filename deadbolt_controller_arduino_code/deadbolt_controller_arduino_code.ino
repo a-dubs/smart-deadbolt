@@ -82,8 +82,8 @@
 #define UNLOCKED 0
 #define SETUP_MODE 0
 #define ULTRASONIC_TRIALS 1
-#define LOCKED_POT_POS 190       // min value potentiometer must read for door to be "locked" (in degrees [0-270])
-#define UNLOCKED_POT_POS 20      // max value potentiometer must read for door to be "unlocked" (in degrees [0-270])
+#define LOCKED_POT_POS 220      // min value potentiometer must read for door to be "locked" (in degrees [0-270])
+#define UNLOCKED_POT_POS 40      // max value potentiometer must read for door to be "unlocked" (in degrees [0-270])
 #define MOTOR_MIN_OVERSHOOT 5    // how many degrees further than the minimum locked/unlocked potentiometer pos must the motor turn the deadbolt until stopping
 #define MOTOR_STALL_TIMEOUT 200  // how many ms motor must be "stalled" for until it is considered officially stalled
 #define MOTOR_STALL_DIST 1       // min number of degrees that must be advanced within the motor stall timeout window  for it to be considered officially stalled
@@ -93,6 +93,7 @@
 #define MANUAL_ASSIST_ACTIVATION_THRESHOLD 5 // how many units out of 1024 potentiometer must turn before deadbolt motion is interpreted as the deadbolt being manually turned (>=)
 #define KEEP_UNLOCKED_DUR 15000              // in ms, how long should deadbolt stay unlocked for before auto re-locking after being unlocked
 #define DOOR_FULLY_OPEN_MIN_DUR 2000
+#define MOTOR_MAX_TIME_ON 1000  // how long the motor can continuously run for before being considered stalled
 
 #define ULTRASONIC_ENABLED false
 // Bounce2::Button door_limit_switch_debouncer = Bounce2::Button();
@@ -610,11 +611,20 @@ void loop()
       }
 
       // if motor has stalled
-      if (motor_on && millis() - last_time_pot_advanced >= MOTOR_STALL_TIMEOUT)
+      if (motor_on && (millis() - last_time_pot_advanced >= MOTOR_STALL_TIMEOUT || millis() - time_motor_started > MOTOR_MAX_TIME_ON))
       {
+          
           motor_stalled = true;
           set_led(LEDS_MOTOR_WARN, MOTOR_WARN_STALL_COLOR);
-          printf("MOTOR STALLED!\n");
+//          printf("MOTOR STALLED!\n");
+          if (millis() - last_time_pot_advanced >= MOTOR_STALL_TIMEOUT)
+          { 
+            printf("motor stalled #1\n");
+          }
+          else if (millis() - time_motor_started > MOTOR_MAX_TIME_ON)
+          {
+            printf("motor stalled #2\n");
+          }
           if (deadbolt_target_state == LOCKED)
           {
               unlockDeadbolt();
@@ -825,6 +835,23 @@ void loop()
         else if (rx == 'h')
         {
             set_led(LEDS_AUTH, AUTH_CONNECTED_COLOR);
+        }
+        else if (rx == 's')
+        {
+          stopDeadbolt();
+        }
+    
+        else if (rx == 'u')
+        {
+          unlockDeadbolt();
+        }
+        else if (rx == 'l')
+        {
+          lockDeadbolt();
+        }
+        else if (rx == 'p')
+        {
+          printf("gear potentiometer rotation [0-270deg]: %d ; raw value: %d\n", gear_pot_rot, gear_pot_val);
         }
     }
 
