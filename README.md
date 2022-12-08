@@ -42,6 +42,11 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 <br>
 
 
+### The Smart Deadbolt in Action!
+![The Smart Deadbolt in Action](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/v4/deadbolt_in_action_compressed.gif)
+<br>
+
+
 ### 3D Model of Full Assembly (V4) - Clear Walls
 ![3D Model of Full Assembly (V4) - Clear Walls](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/v4/angle_view_clear_walls.png)
 <br>
