@@ -24,13 +24,41 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
   - Remote monitoring of whether door is ajar/open
   - Remote monitoring and control of the deadbolt from anywhere, enabling the ability to let guests into home remotely
   - Function that prevents deadbolt from locking for any reason - useful for when you want to step outside quickly without needing your keys or a smarthpone 
-- Currently on its **3rd** major version (V3)
+- Currently on its **4th** major version (V4)
+  - V1 was the proof of concept
+  - V2 was a more complete prototype, with only small improvements over V2, mostly just improved modularity 
+  - V3 saw the complete overhaul of the design into a proper enclosure with better modularity and better complexity
+  - V4 took V3's complete design and cleaned up the aesthetics considerably, while adding fully realized modularity allowing for the addition of more attachments and sensors
+  
 
 <br>
 
 ## Image Gallery
 
-### Assembly of 3D Printed Components
+
+
+### The Smart Deadbolt w/ Clear Window On
+![The Smart Deadbolt w/ Clear Window On](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/v4/smart_deadbolt_picture.jpg)
+<br>
+
+
+### 3D Model of Full Assembly (V4) - Clear Walls
+![3D Model of Full Assembly (V4) - Clear Walls](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/v4/angle_view_clear_walls.png)
+<br>
+
+### 3D Model of Full Assembly (V4) - Opaque Walls
+![3D Model of Full Assembly (V4) - Opaque Walls](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/v4/angle_view_with_walls.png)
+<br>
+
+### 3D Model of Full Assembly (V4) - Front View
+![3D Model of Full Assembly (V4) - Front View](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/v4/front_view.png)
+<br>
+
+### OLDER VERSION (V3) - Exploded View of 3D Models 
+![OLDER VERSION (V3) - Exploded View of 3D Models](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/v3/full_assembly_expanded_1.jpg)
+<br>
+
+<!--### Assembly of 3D Printed Components
 ![assembly of 3d printed components](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_1.jpg)
 
 <br>
@@ -40,11 +68,6 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 
 <br>
 
-<!-- ### View w/ Clear Top
-![view with clear top](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_clear_roof_1.jpg)
-
-<br>
- -->
 ### View w/ Clear Sides
 ![view with clear sides](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_clear_sides_1.jpg)
 
@@ -58,7 +81,7 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 ### Exploded View w/ Clear Sides & Bottom
 ![exploded view with clears sides and bottom](https://github.com/a-dubs/smart-deadbolt/blob/master/image_gallery/full_assembly_expanded_2.jpg)
 
-<br>
+<br> -->
 
 
 <br>
