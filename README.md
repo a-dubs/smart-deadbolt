@@ -93,7 +93,7 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
 
 ## Project Metadata
 
-**Project Status** : Active  
+**Project Status** : Archived  
 **Project Progress** : Functional  
 **Project Dates** : Oct '21 - Aug '23  
 
