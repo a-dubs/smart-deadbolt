@@ -23,7 +23,7 @@ Brainstormed, designed, built, and programmed a smart deadbolt from scratch
   - Automatically locks deadbolt after a minute if it is left unlocked
   - Remote monitoring of whether door is ajar/open
   - Remote monitoring and control of the deadbolt from anywhere, enabling the ability to let guests into home remotely
-  - Function that prevents deadbolt from locking for any reason - useful for when you want to step outside quickly without needing your keys or a smarthpone 
+  - Function that prevents deadbolt from locking for any reason - useful for when you want to step outside quickly without needing your keys or a smartphone 
 - Currently on its **4th** major version (V4)
   - V1 was the proof of concept
   - V2 was a more complete prototype, with only small improvements over V2, mostly just improved modularity 
